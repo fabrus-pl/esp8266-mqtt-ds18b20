@@ -1,4 +1,5 @@
-
+#ifndef PAGE_ROOT_H
+#define PAGE_ROOT_H
 
 const char PAGE_Root[] PROGMEM = R"=====(
 <!doctype html>
@@ -28,3 +29,4 @@ void sendRootPage()
     server.send ( 200, "text/html", reinterpret_cast<const __FlashStringHelper *>(PAGE_Root) );  
 }
  
+#endif

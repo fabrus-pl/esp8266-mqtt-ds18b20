@@ -1,8 +1,9 @@
-
-
 //
 //  HTML PAGE
 //
+#ifndef PAGE_MQTTCONFIGURATION_H
+#define PAGE_MQTTCONFIGURATION_H
+
 const char PAGE_MQTTConfiguration[] PROGMEM = R"=====(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -66,7 +67,7 @@ void send_mqtt_configuration_html()
 		}
 		server.send ( 200, "text/html", reinterpret_cast<const __FlashStringHelper *>(PAGE_Reloading ));
 		WriteConfig();
-    client.set_server(config.MQTTBroker, config.MQTTport);
+    client.setServer(config.MQTTBroker.c_str(), config.MQTTport);
     ConnectMQTT();
     firstStart = true;
 		AdminTimeOutCounter=0;
@@ -100,4 +101,4 @@ void send_mqtt_configuration_values_html()
 	
 }
 
-
+#endif

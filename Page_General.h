@@ -1,6 +1,9 @@
 //
+
 //  HTML PAGE
 //
+#ifndef PAGE_GENERAL_H
+#define PAGE_GENERAL_H
 
 const char PAGE_AdminGeneralSettings[] PROGMEM =  R"=====(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -144,3 +147,4 @@ void send_general_configuration_values_html()
   server.send ( 200, "text/plain", values);
   Serial.println(__FUNCTION__); 
 }
+#endif

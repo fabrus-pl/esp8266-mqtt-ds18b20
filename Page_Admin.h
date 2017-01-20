@@ -1,8 +1,8 @@
-
-
 //
 //  HTML PAGE
 //
+#ifndef PAGE_ADMIN_H
+#define PAGE_ADMIN_H
 
 const char PAGE_AdminMainPage[] PROGMEM = R"=====(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -34,3 +34,4 @@ function load(e,t,n){if("js"==t){var a=document.createElement("script");a.src=e,
 )=====";
 
 
+#endif

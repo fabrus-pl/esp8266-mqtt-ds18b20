@@ -4,35 +4,39 @@
 
 // handle incoming messages
 
-void callback(const MQTT::Publish& pub)             
+void callback(char* topic_str, byte* payload_str, unsigned int length)
 {
-  Serial.print("Received from Topic: "); Serial.print(pub.topic()); Serial.print("=> "); Serial.print(pub.payload_string()); Serial.print("  Length: "); Serial.println(pub.payload_len(),DEC);
+	String topic = String(topic_str);
+	String payload = String((char*)payload_str);
+
+    Serial.print("Received from Topic: "); Serial.print(topic); Serial.print("=> "); Serial.print(payload); Serial.print("  Length: "); Serial.println(length,DEC);
    
-    if ((pub.payload_string().equalsIgnoreCase("on:")))
+    if ((payload.equalsIgnoreCase("on:")))
     {
     BypassOn = true;
     client.publish("feedback", "Device <ON>");
     }
   
-      else if ((pub.payload_string().equalsIgnoreCase("off:")))  
+      else if ((payload.equalsIgnoreCase("off:")))
         {
         BypassOn = false;
         client.publish("feedback", "Device <OFF>");
         }
 
 
-      else if ((pub.payload_string().equalsIgnoreCase("time:"))) 
+      else if ((payload.equalsIgnoreCase("time:")))
         {
         char timeBuff[25];
         sprintf(timeBuff, "%02d:%02d - Date is %02d/%02d/%02d", DateTime.hour,DateTime.minute,DateTime.day,DateTime.month,DateTime.year);
-        String MQTTTime = timeBuff;
-        client.publish("feedback", "Time is: "+ MQTTTime);
+        String MQTTTime = "Time is: ";
+        MQTTTime.concat(timeBuff);
+        client.publish("feedback", MQTTTime.c_str());
         Serial.println("feedback Device Current Time is " + MQTTTime);
         }
 
-      else if((pub.payload_string().startsWith("on time:"))) 
+      else if((payload.startsWith("on time:")))
         {
-        String OnTime = pub.payload_string();
+        String OnTime = payload;
             if (OnTime.length()==14) 
             {
             OnTime.remove(0,9);
@@ -41,8 +45,9 @@ void callback(const MQTT::Publish& pub)
             config.TurnOnMinute = OnTime.substring(3,5).toInt();
             char minBuff[5];                                                                // All this just to print leading zero's!
             sprintf(minBuff, "%02d:%02d", config.TurnOnHour, config.TurnOnMinute);
-            String pubOnTime = minBuff;
-            client.publish("feedback", "On time set to: " + pubOnTime);
+            String pubOnTime ="On time set to: ";
+            		pubOnTime.concat(minBuff);
+            client.publish("feedback",pubOnTime.c_str());
             WriteConfig();
             }
              else 
@@ -53,9 +58,9 @@ void callback(const MQTT::Publish& pub)
                }
          }
 
-      else if((pub.payload_string().startsWith("off time:"))) 
+      else if((payload.startsWith("off time:")))
         {
-        String OffTime = pub.payload_string();
+        String OffTime = payload;
           if (OffTime.length()==15) 
             {
             OffTime.remove(0,10);
@@ -64,8 +69,9 @@ void callback(const MQTT::Publish& pub)
             config.TurnOffMinute = OffTime.substring(3,5).toInt();
             char minBuff[5];                                                                  // All this just to print leading zero's!
             sprintf(minBuff, "%02d:%02d",config.TurnOffHour, config.TurnOffMinute);
-            String pubOffTime = minBuff;
-            client.publish("feedback", "Off time set to: " + pubOffTime);
+            String pubOffTime = "Off time set to: ";
+            pubOffTime.concat(minBuff);
+            client.publish("feedback",pubOffTime.c_str());
             WriteConfig();
             }
               else 
@@ -77,9 +83,9 @@ void callback(const MQTT::Publish& pub)
          }
 
 
-      else if((pub.payload_string().startsWith("auto turn on:"))) 
+      else if((payload.startsWith("auto turn on:")))
         {
-        String MQTTAutoOffOn = pub.payload_string();
+        String MQTTAutoOffOn = payload;
         MQTTAutoOffOn.remove(0,14);
            if (MQTTAutoOffOn == "enable")
               {
@@ -99,13 +105,15 @@ void callback(const MQTT::Publish& pub)
                  {
                  Serial.println("");
                  Serial.println("Time must be entered in the following format:- auto turn on: enable or auto turn on: disable.");
-                 client.publish("feedback", "?? " + MQTTAutoOffOn);
+                 String errorString="?? ";
+                 errorString.concat(MQTTAutoOffOn);
+                 client.publish("feedback",  + errorString.c_str());
                  }
          }
 
-      else if((pub.payload_string().startsWith("auto turn off:"))) 
+      else if((payload.startsWith("auto turn off:")))
         {
-        String MQTTAutoOffOn = pub.payload_string();
+        String MQTTAutoOffOn = payload;
         MQTTAutoOffOn.remove(0,15);
            if (MQTTAutoOffOn == "enable")
               {
@@ -125,12 +133,14 @@ void callback(const MQTT::Publish& pub)
                   {
                  Serial.println("");
                  Serial.println("Time must be entered in the following format:- auto turn off: enable or auto turn off: disable.");
-                 client.publish("feedback", "?? " + MQTTAutoOffOn);
+                 String errorString="?? ";
+                 errorString.concat(MQTTAutoOffOn);
+                 client.publish("feedback", errorString.c_str());
                  }
          }
 
 
-     else if ((pub.payload_string().equalsIgnoreCase("status:")))
+     else if ((payload.equalsIgnoreCase("status:")))
        {
         String statTurnOn;
         String statTurnOff;
@@ -138,61 +148,65 @@ void callback(const MQTT::Publish& pub)
         String timerStat;
         if (config.AutoTurnOn)
             {
-            statTurnOn = "Enabled";
+            statTurnOn = "Auto Turn on is: Enabled";
             } 
             else
             {
-            statTurnOn = "Disabled";
+            statTurnOn = "Auto Turn on is: Disabled";
             }
   
         if (config.AutoTurnOff)
             {
-            statTurnOff = "Enabled"; 
+            statTurnOff = "Auto Turn 0ff is: Enabled";
             }
             else
             {
-            statTurnOff = "Disabled";
+            statTurnOff = "Auto Turn 0ff is: Disabled";
             }
         if (BypassOn)
             {
-            bypassStat = "Enabled";    
+            bypassStat = "Bypass is: Enabled";
             }
             else
             {
-            bypassStat = "Disabled";
+            bypassStat = "Bypass is: Disabled";
             }
         if (devStat)
             {
-            timerStat = "Enabled";
+            timerStat = "Timer status is: Enabled";
             }
             else 
             {
-            timerStat = "Disabled";
+            timerStat = "Timer status is: Disabled";
             }
         char onBuff[5];
         sprintf(onBuff, "%02d:%02d", config.TurnOnHour, config.TurnOnMinute);
-        String pubOnBuff = onBuff;
+        String pubOnBuff = "Turn on time is: ";
+        pubOnBuff.concat(onBuff);
         char offBuff[5];
         sprintf(offBuff, "%02d:%02d",config.TurnOffHour, config.TurnOffMinute);
-        String pubOffBuff = offBuff;
+        String pubOffBuff = "Turn off time is: ";
+        pubOffBuff.concat(offBuff);
         client.publish("feedback", "Current setup status: ");
         delay(100);
-        client.publish("feedback", "Auto Turn on is: " + statTurnOn);
+        client.publish("feedback", statTurnOn.c_str());
         delay(100);
-        client.publish("feedback", "Auto Turn 0ff is: " + statTurnOff);
+        client.publish("feedback", statTurnOff.c_str());
         delay(100);
-        client.publish("feedback", "Turn on time is: " + pubOnBuff);
+        client.publish("feedback", pubOnBuff.c_str());
         delay(100);
-        client.publish("feedback", "Turn off time is: " + pubOffBuff);
+        client.publish("feedback",  + pubOffBuff.c_str());
         delay(100);
-        client.publish("feedback", "Bypass is: " + bypassStat);
+        client.publish("feedback", bypassStat.c_str());
         delay(100);
-        client.publish("feedback", "Timer status is: " + timerStat);
+        client.publish("feedback", timerStat.c_str());
       }
     else  
     {
-    client.publish("feedback", "?? " + pub.payload_string());
-    Serial.print(" \tsent: feedback=> ???? '"); Serial.print(pub.payload_string()); Serial.println("'");
+    String errorString = "?? ";
+    errorString.concat(payload);
+    client.publish("feedback", errorString.c_str());
+    Serial.print(" \tsent: feedback=> ???? '"); Serial.print(payload); Serial.println("'");
     }
 }
 

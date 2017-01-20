@@ -1,8 +1,9 @@
-
-
 //
 //  HTML PAGE
 //
+#ifndef PAGE_NETWORKCONFIGURATION_H
+#define PAGE_NETWORKCONFIGURATION_H
+
 const char PAGE_NetworkConfiguration[] PROGMEM = R"=====(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -203,3 +204,5 @@ void send_connection_state_values_html()
 	Serial.println(__FUNCTION__); 
 	
 }
+
+#endif

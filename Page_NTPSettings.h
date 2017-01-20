@@ -1,3 +1,5 @@
+#ifndef PAGE_NTPSETTINGS_H
+#define PAGE_NTPSETTINGS_H
 
 const char PAGE_NTPConfiguration[] PROGMEM = R"=====(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -110,3 +112,5 @@ void send_NTP_configuration_values_html()
 	Serial.println(__FUNCTION__); 
 	
 }
+
+#endif
