@@ -53,7 +53,7 @@ void setup ( void )
 	setupConfig();
 	setupMQTT();
 
-    startNetwork();
+	startNetwork();
 	startWebServer();
 	startNTPClient();
 	startTimers();
