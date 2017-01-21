@@ -210,5 +210,44 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
     }
 }
 
+void setupMQTT(void)
+{
+	client.setCallback(callback);                          // Complete PubSubClient initalisation after client instance creation in globals
+	client.setServer(config.MQTTBroker.c_str(), config.MQTTport);
+}
+
+void ConnectMQTT()
+ {
+   if (WiFi.status() == WL_CONNECTED)
+    {
+    Serial.println("");
+    Serial.print("Connecting to MQTT Broker:"); //Serial.print(config.MQTTBroker);
+    int retries = 4;
+      while (!client.connect(config.clientID.c_str(), config.MQTTuser.c_str(), config.MQTTpass.c_str()) && retries-- )
+      {
+      delay(500);
+      Serial.print(".");
+      }
+        if(client.connected())                   // Connected to MQTT server
+        {
+        Serial.println("");
+        Serial.println("");
+        Serial.print("MQTT Client: ");
+        Serial.print(config.clientID);
+        Serial.print(": is connected to MQTT server: ");
+        Serial.println(config.MQTTBroker);
+        client.publish("feedback", "hello from esp8266");
+        Serial.println("");
+        client.subscribe("device");
+        Serial.println("Subscribed to: 'device'");
+        Serial.println("");
+        }
+        else
+        {
+        Serial.println("\nfatal: MQTT server Connection failed");
+        }
+     }
+ }
+
 #endif      
     

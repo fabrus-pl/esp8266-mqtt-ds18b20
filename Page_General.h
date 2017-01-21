@@ -4,6 +4,7 @@
 //
 #ifndef PAGE_GENERAL_H
 #define PAGE_GENERAL_H
+#include "webserver.h"
 
 const char PAGE_AdminGeneralSettings[] PROGMEM =  R"=====(
 <meta name="viewport" content="width=device-width, initial-scale=1" />

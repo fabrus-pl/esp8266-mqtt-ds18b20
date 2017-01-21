@@ -58,24 +58,24 @@ void send_mqtt_configuration_html()
 	if (server.args() > 0 )  // Save Settings
 	{
 		String temp = "";
-		for ( uint8_t i = 0; i < server.args(); i++ ) {
+		for ( uint8_t i = 0; i < server.args(); i++ )
+		{
 			if (server.argName(i) == "clientid") config.clientID =   urldecode(server.arg(i));
-      if (server.argName(i) == "username") config.MQTTuser =    urldecode(server.arg(i));
+			if (server.argName(i) == "username") config.MQTTuser =    urldecode(server.arg(i));
 			if (server.argName(i) == "passwd") config.MQTTpass =    urldecode(server.arg(i));
-      if (server.argName(i) == "mqttport") config.MQTTport =  server.arg(i).toInt(); 
-      if (server.argName(i) == "broker") config.MQTTBroker =    urldecode(server.arg(i)); 			
+			if (server.argName(i) == "mqttport") config.MQTTport =  server.arg(i).toInt();
+			if (server.argName(i) == "broker") config.MQTTBroker =    urldecode(server.arg(i));
 		}
 		server.send ( 200, "text/html", reinterpret_cast<const __FlashStringHelper *>(PAGE_Reloading ));
 		WriteConfig();
-    client.setServer(config.MQTTBroker.c_str(), config.MQTTport);
-    ConnectMQTT();
-    firstStart = true;
+		client.setServer(config.MQTTBroker.c_str(), config.MQTTport);
+		ConnectMQTT();
+		firstStart = true;
 		AdminTimeOutCounter=0;
-		
 	}
 	else
 	{
-    server.send ( 200, "text/html", reinterpret_cast<const __FlashStringHelper *>(PAGE_MQTTConfiguration) ); 
+		server.send ( 200, "text/html", reinterpret_cast<const __FlashStringHelper *>(PAGE_MQTTConfiguration) );
 	}
 	Serial.println(__FUNCTION__); 
 }
