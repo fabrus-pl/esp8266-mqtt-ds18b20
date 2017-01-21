@@ -1,3 +1,5 @@
+#ifndef PAGE_STYLE_CSS_H
+#define PAGE_STYLE_CSS_H
 
 const char PAGE_Style_css[] PROGMEM = R"=====(
 body { color: #000000; font-family: avenir, helvetica, arial, sans-serif;  letter-spacing: 0.15em;} 
@@ -66,3 +68,4 @@ color: #fff;
 	}
 )=====";
  
+#endif

@@ -101,8 +101,8 @@ void setup ( void )
     Serial.println("General config applied");
   }
   
-  client.set_callback(callback);                          // Complete PubSubClient initalisation after client instance creation in globals
-  client.set_server(config.MQTTBroker, config.MQTTport);
+  client.setCallback(callback);                          // Complete PubSubClient initalisation after client instance creation in globals
+  client.setServer(config.MQTTBroker.c_str(), config.MQTTport);
   
   
   if (AdminEnabled)
