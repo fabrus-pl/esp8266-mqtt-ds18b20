@@ -1,5 +1,6 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
+#include "config.h"
 
 ESP8266WebServer server(80);                        // Create web server instance
 boolean firstStart = true;                          // On firststart = true, NTP will try to get a valid time
@@ -22,255 +23,47 @@ int cb;                                             // NTP packet check store
 unsigned int localNtpPort = 2390;                   // Set the incomming UDP port to listen to
 boolean devStat = false;                            // Timer status condition
 WiFiClient wclient;                                 // Create WiFi client instance
-
-
-
-#define LED 14                                      // Device output pin definition, yep I know it's defined as LED, cause that's what I was using to test.
-
-struct strConfig 
-  {
-    String WiFissid;
-    String WiFipass;
-    byte IP[4];
-    byte Netmask[4];
-    byte Gateway[4];
-    boolean dhcp;
-    String ntpServerName;
-    long Update_Time_Via_NTP_Every;
-    long timezone;
-    boolean daylight;
-    String DeviceName;
-    boolean AutoTurnOff;
-    boolean AutoTurnOn;
-    byte TurnOnHour;
-    byte TurnOnMinute;
-    byte TurnOffHour;
-    byte TurnOffMinute;
-    String MQTTBroker;                  // MQTT broker parameters URL
-    long MQTTport;                      // MQTT port
-    String MQTTuser;                    // MQTT username
-    String MQTTpass;                    // MQTT password
-    String clientID;                    // MQTT client ID - this device
-  } config;
-
-
 PubSubClient client(wclient);            // Partially initialise PubSubClient we'll do the remainder in void setup
 
-void WriteConfig()
+#define AdminTimeOut 180                                   // Defines the Time in Seconds, when the Admin-Mode will be disabled
+#define LED 14                                      // Device output pin definition, yep I know it's defined as LED, cause that's what I was using to test.
+extern void ConnectMQTT(void);
+
+
+
+
+bool ConfigureWifi()
 {
-
-  Serial.println("Writing Config");
-  EEPROM.write(0,'C');
-  EEPROM.write(1,'F');
-  EEPROM.write(2,'G');
-
-  EEPROM.write(16,config.dhcp);
-  EEPROM.write(17,config.daylight);
-  
-  EEPROMWritelong(18,config.Update_Time_Via_NTP_Every); // 4 Byte
-
-  EEPROMWritelong(22,config.timezone);  // 4 Byte
-  EEPROMWritelong(26,config.MQTTport);  // 4 Byte
-  
-  EEPROM.write(32,config.IP[0]);
-  EEPROM.write(33,config.IP[1]);
-  EEPROM.write(34,config.IP[2]);
-  EEPROM.write(35,config.IP[3]);
-
-  EEPROM.write(36,config.Netmask[0]);
-  EEPROM.write(37,config.Netmask[1]);
-  EEPROM.write(38,config.Netmask[2]);
-  EEPROM.write(39,config.Netmask[3]);
-
-  EEPROM.write(40,config.Gateway[0]);
-  EEPROM.write(41,config.Gateway[1]);
-  EEPROM.write(42,config.Gateway[2]);
-  EEPROM.write(43,config.Gateway[3]);
-
-  WriteStringToEEPROM(64,config.WiFissid);
-  WriteStringToEEPROM(96,config.WiFipass);
-  WriteStringToEEPROM(128,config.ntpServerName);
-
-  WriteStringToEEPROM(160,config.MQTTuser);
-  WriteStringToEEPROM(192,config.MQTTpass);
-  WriteStringToEEPROM(224,config.clientID);
-  WriteStringToEEPROM(256,config.MQTTBroker);  
-
-  EEPROM.write(384,config.AutoTurnOn);
-  EEPROM.write(385,config.AutoTurnOff);
-  EEPROM.write(386,config.TurnOnHour);
-  EEPROM.write(387,config.TurnOnMinute);
-  EEPROM.write(388,config.TurnOffHour);
-  EEPROM.write(389,config.TurnOffMinute);
-  WriteStringToEEPROM(390,config.DeviceName);
-  
-  EEPROM.commit();                             
-
+	Serial.println("Configuring WiFi "); //Serial.print(config.WiFissid);
+	WiFi.mode(WIFI_STA);
+    delay (1000);
+	WiFi.begin (config.WiFissid.c_str(), config.WiFipass.c_str());
+	if (!config.dhcp)
+	{
+		WiFi.config(IPAddress(config.IP[0],config.IP[1],config.IP[2],config.IP[3] ),  IPAddress(config.Gateway[0],config.Gateway[1],config.Gateway[2],config.Gateway[3] ) , IPAddress(config.Netmask[0],config.Netmask[1],config.Netmask[2],config.Netmask[3] ));
+	}
+	int retries = 10;
+	while ((WiFi.status() != WL_CONNECTED) && retries--)
+	{
+		delay(5000);
+		Serial.print(".");
+	}
+	if (WiFi.status() != WL_CONNECTED)
+	{
+		Serial.println("Unable to connect to WiFi network....!");
+		WiFi.mode(WIFI_OFF);
+        delay (500);
+		return false;
+	}
+	else
+	{
+		Serial.println("");
+		Serial.print("WiFi connected to IP Address: "); Serial.println(WiFi.localIP());
+		return true;
+	}
 }
-
-
-boolean ReadConfig()
-{
-
-  Serial.println("Reading Configuration");
-  if (EEPROM.read(0) == 'C' && EEPROM.read(1) == 'F'  && EEPROM.read(2) == 'G' )
-  {
-    Serial.println("Configuration Found!");
-    config.dhcp =   EEPROM.read(16);
-    config.daylight = EEPROM.read(17);
-    config.Update_Time_Via_NTP_Every = EEPROMReadlong(18); // 4 Byte
-
-    config.timezone = EEPROMReadlong(22); // 4 Byte
-    config.MQTTport = EEPROMReadlong(26); // 4 Byte
-    
-    config.IP[0] = EEPROM.read(32);
-    config.IP[1] = EEPROM.read(33);
-    config.IP[2] = EEPROM.read(34);
-    config.IP[3] = EEPROM.read(35);
-    config.Netmask[0] = EEPROM.read(36);
-    config.Netmask[1] = EEPROM.read(37);
-    config.Netmask[2] = EEPROM.read(38);
-    config.Netmask[3] = EEPROM.read(39);
-    config.Gateway[0] = EEPROM.read(40);
-    config.Gateway[1] = EEPROM.read(41);
-    config.Gateway[2] = EEPROM.read(42);
-    config.Gateway[3] = EEPROM.read(43);
-    config.WiFissid = ReadStringFromEEPROM(64);
-    config.WiFipass = ReadStringFromEEPROM(96);
-    config.ntpServerName = ReadStringFromEEPROM(128);
-    config.MQTTuser = ReadStringFromEEPROM(160);
-    config.MQTTpass = ReadStringFromEEPROM(192);
-    config.clientID = ReadStringFromEEPROM(224);
-    config.MQTTBroker = ReadStringFromEEPROM(256);    
-    
-    config.AutoTurnOn = EEPROM.read(384);
-    config.AutoTurnOff = EEPROM.read(385);
-    config.TurnOnHour = EEPROM.read(386);
-    config.TurnOnMinute = EEPROM.read(387);
-    config.TurnOffHour = EEPROM.read(388);
-    config.TurnOffMinute = EEPROM.read(389);
-    config.DeviceName= ReadStringFromEEPROM(390);
-    return true;
-    
-  }
-  else
-  {
-    Serial.println("Configuration NOT FOUND!!!!");
-    return false;
-  }
-}
-
-
-void ConfigureWifi()
-  {
-  Serial.println("Configuring WiFi "); //Serial.print(config.WiFissid);
-  WiFi.begin (config.WiFissid.c_str(), config.WiFipass.c_str());
-    if (!config.dhcp)
-       {
-        WiFi.config(IPAddress(config.IP[0],config.IP[1],config.IP[2],config.IP[3] ),  IPAddress(config.Gateway[0],config.Gateway[1],config.Gateway[2],config.Gateway[3] ) , IPAddress(config.Netmask[0],config.Netmask[1],config.Netmask[2],config.Netmask[3] ));
-       }
-     int retries = 10;
-       while ((WiFi.status() != WL_CONNECTED) && retries--) 
-       {
-       delay(1000);
-       Serial.print(".");
-       }
-       if (WiFi.status() != WL_CONNECTED)
-       {
-         Serial.println("Unable to connect to WiFi network....!");
-       }
-     Serial.println("");
-     Serial.print("WiFi connected to IP Address: "); Serial.println(WiFi.localIP());
-  }
   
 
-  
-void ConnectMQTT()
- {
-   if (WiFi.status() == WL_CONNECTED)
-    {
-    Serial.println("");
-    Serial.print("Connecting to MQTT Broker:"); //Serial.print(config.MQTTBroker); 
-    int retries = 4;
-      while (!client.connect(config.clientID.c_str(), config.MQTTuser.c_str(), config.MQTTpass.c_str()) && retries-- )
-      {
-      delay(500);
-      Serial.print(".");
-      }
-        if(client.connected())                   // Connected to MQTT server
-        {
-        Serial.println("");
-        Serial.println("");
-        Serial.print("MQTT Client: ");
-        Serial.print(config.clientID);
-        Serial.print(": is connected to MQTT server: ");
-        Serial.println(config.MQTTBroker);
-        client.publish("feedback", "hello from esp8266");
-        Serial.println("");
-        client.subscribe("device");
-        Serial.println("Subscribed to: 'device'");
-        Serial.println("");
-        } 
-        else    
-        {
-        Serial.println("\nfatal: MQTT server Connection failed");
-        }
-     }
- }
-
-
-
-void NTPRefresh() 
-  {
-  if (WiFi.status() == WL_CONNECTED)
-    {
-      IPAddress timeServerIP; 
-      WiFi.hostByName(config.ntpServerName.c_str(), timeServerIP);
-      Serial.println("");
-      Serial.print("sending NTP packet to  "); Serial.print(timeServerIP);
-      memset(packetBuffer, 0, NTP_PACKET_SIZE);
-      packetBuffer[0] = 0b11100011;                 // LI, Version, Mode
-      packetBuffer[1] = 0;                          // Stratum, or type of clock
-      packetBuffer[2] = 6;                          // Polling Interval
-      packetBuffer[3] = 0xEC;                       // Peer Clock Precision
-      packetBuffer[12]  = 49;
-      packetBuffer[13]  = 0x4E;
-      packetBuffer[14]  = 49;
-      packetBuffer[15]  = 52;
-      int retries = 5;
-       do
-        { 
-        UDPNTPClient.beginPacket(timeServerIP, 123); 
-        UDPNTPClient.write(packetBuffer, NTP_PACKET_SIZE);
-        UDPNTPClient.endPacket();
-        delay(1000);
-        Serial.print(".");
-        cb = UDPNTPClient.parsePacket();
-        if (!cb)                                            // I dont know why but sometimes we have to restart UDPNTP again and re-write the port
-            {
-            UDPNTPClient.begin(localNtpPort);
-            } 
-        } while (!cb && retries--);
-          if (!cb)
-            {
-            Serial.println("");
-            Serial.println("Unable to get NTP packet.....!");
-            }
-        else
-        {
-        Serial.println("");
-        Serial.print("NTP packet received, length = ");
-        Serial.println(cb);
-        UDPNTPClient.read(packetBuffer, NTP_PACKET_SIZE);                   // read the packet into the buffer
-        unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-        unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-        unsigned long secsSince1900 = highWord << 16 | lowWord;
-        const unsigned long seventyYears = 2208988800UL;
-        unsigned long epoch = secsSince1900 - seventyYears;
-        UnixTimestamp = epoch;
-        }
-     }    
-}
 
 
 // Main internal clock called every second by Ticker.h
@@ -298,4 +91,104 @@ void Second_Tick()
   Refresh = true; 
 }
 
+void initialize(void)
+{
+	EEPROM.begin(512);
+	Serial.begin(115200);
+	delay(500);
+	Serial.println("");
+	Serial.println("Starting esp8266");
+	Serial.println("");
+	delay(10);
+}
+
+void handleAdminMode(void)
+{
+	if (AdminEnabled)
+	{
+		if (AdminTimeOutCounter > AdminTimeOut)
+		{
+			AdminEnabled = false;                                   // Start up WiFi and MQTT after Admin timeout expires.
+			Serial.println("Admin Mode disabled!");
+			Serial.println("Starting WiFi");
+			ConfigureWifi();
+			delay(2000);
+			ConnectMQTT();
+			delay(1000);
+		}
+	}
+
+}
+
+void handleTurnOnAndOff(void)
+{
+	if (DateTime.hour != 0 && DateTime.minute != 0 && (cb))      //Dont turn on anything if set time = 00:00 and we dont have NTP time at power up
+	{
+		if(DateTime.minute != Minute_Old)
+		{
+			Minute_Old = DateTime.minute;                                                               // Turn on device if AutoTurn on enabled and time set = NTP time
+			if (config.AutoTurnOn)
+			{
+				if (DateTime.hour == config.TurnOnHour && DateTime.minute == config.TurnOnMinute)
+				{
+					devStat = true;                                                                         // Set status to indicate that we are under timer mode
+					digitalWrite(LED,LOW);
+					Serial.println("Device On");
+					client.publish("feedback", "Device <ON>");
+				}
+			}
+
+			Minute_Old = DateTime.minute;                                                                // Turn off device if AutoTurn off enabled and time set = NTP time
+			if (config.AutoTurnOff)
+			{
+				if (DateTime.hour == config.TurnOffHour && DateTime.minute == config.TurnOffMinute)
+				{
+					devStat = false;                                                                        // Set status to indicate that we have finished timer mode
+					digitalWrite(LED,HIGH);
+					Serial.println("Device Off");
+					client.publish("feedback", "Device <OFF>");
+				}
+			}
+		}
+	}
+
+	if (BypassOn)                                                        // Turn on device if Bypass enabled
+	{
+		digitalWrite(LED,LOW);
+	}
+	else if ((!BypassOn) && (devStat))                                // Turn on device if Bypass disabled as timer activated
+	{
+		digitalWrite(LED,LOW);
+	}
+	else if ((!BypassOn) && (!devStat))                               // Turn off device if Bypass disabled and timer deactivated
+	{
+		digitalWrite(LED,HIGH);
+	}
+
+	if ((config.AutoTurnOff==false) && (!BypassOn))                      // Turn off if AutoTurnOff is disabled and Bypass disabled
+	{                                                                 // forces device to turn off in timer mode, cannot be activated again by eanbling AutoTurnoff, use bypass if you wish to turn device on
+		devStat = false;
+	}
+
+	if ((DateTime.hour == config.TurnOffHour && DateTime.minute == config.TurnOffMinute) && (BypassOn)) // turn off device as off time reached (just in case we left Bypass on by mistake!)
+	{
+		digitalWrite(LED, HIGH);
+		BypassOn = false;
+	}
+
+}
+
+void handleRefresh(void)
+{
+	if (Refresh)                                                        // Put other items you want checked here GPIO etc., as refresh runs every second
+	{
+		Refresh = false;
+	}
+}
+
+void startTimers(void)
+{
+	tkSecond.attach(1,Second_Tick);                 // Start internal timer
+
+}
 #endif
