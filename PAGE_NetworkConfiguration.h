@@ -82,8 +82,8 @@ void send_network_configuration_html()
 		String temp = "";
 		config.dhcp = false;
 		for ( uint8_t i = 0; i < server.args(); i++ ) {
-			if (server.argName(i) == "ssid") config.WiFissid =  urldecode(server.arg(i));
-			if (server.argName(i) == "password") config.WiFipass =  urldecode(server.arg(i)); 
+			if (server.argName(i) == "ssid") urldecode(server.arg(i)).toCharArray(config.WiFissid, sizeof(config.WiFissid));
+			if (server.argName(i) == "password") urldecode(server.arg(i)).toCharArray(config.WiFipass, sizeof(config.WiFipass));
 			if (server.argName(i) == "ip_0") if (checkRange(server.arg(i))) 	config.IP[0] =  server.arg(i).toInt();
 			if (server.argName(i) == "ip_1") if (checkRange(server.arg(i))) 	config.IP[1] =  server.arg(i).toInt();
 			if (server.argName(i) == "ip_2") if (checkRange(server.arg(i))) 	config.IP[2] =  server.arg(i).toInt();

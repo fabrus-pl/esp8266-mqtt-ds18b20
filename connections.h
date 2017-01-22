@@ -40,7 +40,7 @@ void handleMQTTConnection (void)
 void startNetwork(void)
 {
 	Serial.println("Starting WiFi");
-	if (!ConfigureWifi())
+	if (AdminEnabled || !ConfigureWifi())
 	{
 		AdminEnabled = true;
 		WiFi.mode(WIFI_AP_STA);
@@ -68,7 +68,7 @@ void NTPRefresh()
   if (WiFi.status() == WL_CONNECTED)
     {
       IPAddress timeServerIP;
-      WiFi.hostByName(config.ntpServerName.c_str(), timeServerIP);
+      WiFi.hostByName(config.ntpServerName, timeServerIP);
       Serial.println("");
       Serial.print("sending NTP packet to  "); Serial.print(timeServerIP);
       memset(packetBuffer, 0, NTP_PACKET_SIZE);

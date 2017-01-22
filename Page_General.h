@@ -108,7 +108,7 @@ void send_general_html()
     BypassOn = false;
     String temp = "";
     for ( uint8_t i = 0; i < server.args(); i++ ) {
-      if (server.argName(i) == "devicename") config.DeviceName = urldecode(server.arg(i)); 
+      if (server.argName(i) == "devicename") urldecode(server.arg(i)).toCharArray(config.DeviceName, sizeof(config.DeviceName));
       if (server.argName(i) == "tonenabled") config.AutoTurnOn = true; 
       if (server.argName(i) == "toffenabled") config.AutoTurnOff = true; 
       if (server.argName(i) == "tonhour") config.TurnOnHour =  server.arg(i).toInt(); 
@@ -118,6 +118,7 @@ void send_general_html()
       if (server.argName(i) == "bypassonenabled") BypassOn = true; 
     }
     WriteConfig();
+    setupMQTTTopics();
     firstStart = true;
   }
   server.send ( 200, "text/html", PAGE_AdminGeneralSettings ); 
