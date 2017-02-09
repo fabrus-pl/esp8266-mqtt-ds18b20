@@ -71,7 +71,6 @@ void loop ()
 	handleNTPUpdate();
 	handleTurnOnAndOff();
 	handleMQTTConnection();
-	handleRefresh();
 }
 
 

@@ -12,9 +12,9 @@ boolean AdminTimeOutCounter = 0;                    // Counter for disabling Adm
 strDateTime DateTime;                               // Global DateTime structure, will be refreshed every Second
 WiFiUDP UDPNTPClient;                               // NTP Client
 unsigned long UnixTimestamp = 0;                    // GLOBALTIME  ( Will be set by NTP)
-boolean Refresh = true;                             // For Main Loop, to refresh things like GPIO / WS2812
 int cNTP_Update = 0;                                // Counter for Updating the time via NTP
 Ticker tkSecond;                                    // Second - Timer for Updating Datetime Structure
+Ticker tkMeasure;                                   // Ticker for triggering measures
 boolean AdminEnabled = false;                        // Enable admin for a certain time
 byte Minute_Old = 100;                              // Helpvariable for checking, when a new Minute comes up (for Auto Turn On / Off)
 boolean BypassOn = false;                           // Toggle on/off via web interface
@@ -75,12 +75,10 @@ bool ConfigureWifi()
 
 void Second_Tick()
 {
-  static uint8 minuteTicks=0;
   strDateTime tempDateTime;
   //AdminTimeOutCounter++;
   cNTP_Update++;
   UnixTimestamp++;
-  minuteTicks++;
   ConvertUnixTimeStamp(UnixTimestamp +  (config.timezone *  360) , &tempDateTime);
   if (config.daylight) 
     if (summertime(tempDateTime.year,tempDateTime.month,tempDateTime.day,tempDateTime.hour,0))
@@ -95,11 +93,6 @@ void Second_Tick()
     {
       DateTime = tempDateTime;
     }
-  if (minuteTicks >=60)
-  {
-	  Refresh = true;
-	  minuteTicks = 0;
-  }
 }
 
 void initialize(void)
@@ -206,17 +199,13 @@ void sensorsMeasure(void)
 
 void handleRefresh(void)
 {
-	if (Refresh)                                                        // Put other items you want checked here GPIO etc., as refresh runs every second
-	{
 		sensorsMeasure();
-		Refresh = false;
-	}
 }
 
 void startTimers(void)
 {
 	tkSecond.attach(1,Second_Tick);                 // Start internal timer
-
+	tkMeasure.attach(60,handleRefresh);             // 60 seconds refresh timer
 }
 
 void startSensors(void)
