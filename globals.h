@@ -2,6 +2,10 @@
 #define GLOBALS_H
 #include "config.h"
 
+#define AdminTimeOut 180                                   // Defines the Time in Seconds, when the Admin-Mode will be disabled
+#define LED 14                                      // Device output pin definition, yep I know it's defined as LED, cause that's what I was using to test.
+#define ONE_WIRE_BUS 2
+
 ESP8266WebServer server(80);                        // Create web server instance
 boolean firstStart = true;                          // On firststart = true, NTP will try to get a valid time
 boolean AdminTimeOutCounter = 0;                    // Counter for disabling Admin mode
@@ -11,7 +15,7 @@ unsigned long UnixTimestamp = 0;                    // GLOBALTIME  ( Will be set
 boolean Refresh = true;                             // For Main Loop, to refresh things like GPIO / WS2812
 int cNTP_Update = 0;                                // Counter for Updating the time via NTP
 Ticker tkSecond;                                    // Second - Timer for Updating Datetime Structure
-boolean AdminEnabled = true;                        // Enable admin for a certain time
+boolean AdminEnabled = false;                        // Enable admin for a certain time
 byte Minute_Old = 100;                              // Helpvariable for checking, when a new Minute comes up (for Auto Turn On / Off)
 boolean BypassOn = false;                           // Toggle on/off via web interface
 int count = 0;                                      // Push Button press time counter
@@ -24,9 +28,10 @@ unsigned int localNtpPort = 2390;                   // Set the incomming UDP por
 boolean devStat = false;                            // Timer status condition
 WiFiClient wclient;                                 // Create WiFi client instance
 PubSubClient client(wclient);            // Partially initialise PubSubClient we'll do the remainder in void setup
-
-#define AdminTimeOut 180                                   // Defines the Time in Seconds, when the Admin-Mode will be disabled
-#define LED 14                                      // Device output pin definition, yep I know it's defined as LED, cause that's what I was using to test.
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+String mqttTemperatureTopic;
+String mqttFeedbackTopic;
 extern void ConnectMQTT(void);
 
 
@@ -37,7 +42,7 @@ bool ConfigureWifi()
 	Serial.println("Configuring WiFi "); //Serial.print(config.WiFissid);
 	WiFi.mode(WIFI_STA);
     delay (1000);
-	WiFi.begin (config.WiFissid.c_str(), config.WiFipass.c_str());
+	WiFi.begin (config.WiFissid, config.WiFipass);
 	if (!config.dhcp)
 	{
 		WiFi.config(IPAddress(config.IP[0],config.IP[1],config.IP[2],config.IP[3] ),  IPAddress(config.Gateway[0],config.Gateway[1],config.Gateway[2],config.Gateway[3] ) , IPAddress(config.Netmask[0],config.Netmask[1],config.Netmask[2],config.Netmask[3] ));
@@ -70,10 +75,12 @@ bool ConfigureWifi()
 
 void Second_Tick()
 {
+  static uint8 minuteTicks=0;
   strDateTime tempDateTime;
-  AdminTimeOutCounter++;
+  //AdminTimeOutCounter++;
   cNTP_Update++;
   UnixTimestamp++;
+  minuteTicks++;
   ConvertUnixTimeStamp(UnixTimestamp +  (config.timezone *  360) , &tempDateTime);
   if (config.daylight) 
     if (summertime(tempDateTime.year,tempDateTime.month,tempDateTime.day,tempDateTime.hour,0))
@@ -88,12 +95,15 @@ void Second_Tick()
     {
       DateTime = tempDateTime;
     }
-  Refresh = true; 
+  if (minuteTicks >=60)
+  {
+	  Refresh = true;
+	  minuteTicks = 0;
+  }
 }
 
 void initialize(void)
 {
-	EEPROM.begin(512);
 	Serial.begin(115200);
 	delay(500);
 	Serial.println("");
@@ -134,7 +144,7 @@ void handleTurnOnAndOff(void)
 					devStat = true;                                                                         // Set status to indicate that we are under timer mode
 					digitalWrite(LED,LOW);
 					Serial.println("Device On");
-					client.publish("feedback", "Device <ON>");
+					client.publish(mqttFeedbackTopic.c_str(), "Device <ON>");
 				}
 			}
 
@@ -146,7 +156,7 @@ void handleTurnOnAndOff(void)
 					devStat = false;                                                                        // Set status to indicate that we have finished timer mode
 					digitalWrite(LED,HIGH);
 					Serial.println("Device Off");
-					client.publish("feedback", "Device <OFF>");
+					client.publish(mqttFeedbackTopic.c_str(), "Device <OFF>");
 				}
 			}
 		}
@@ -177,11 +187,28 @@ void handleTurnOnAndOff(void)
 	}
 
 }
+void sensorsMeasure(void)
+{
+	float temp =0;
+	sensors.setResolution(12);
+	sensors.requestTemperatures(); // Send the command to get temperatures
+	temp = sensors.getTempCByIndex(0);
+	if((temp > -20) && (temp <60))
+	{
+	client.publish(mqttTemperatureTopic.c_str(), String(temp).c_str(),TRUE);
+	}
+	else
+	{
+	Serial.print("Bad reading! :");
+	Serial.println(temp);
+	}
+}
 
 void handleRefresh(void)
 {
 	if (Refresh)                                                        // Put other items you want checked here GPIO etc., as refresh runs every second
 	{
+		sensorsMeasure();
 		Refresh = false;
 	}
 }
@@ -191,4 +218,10 @@ void startTimers(void)
 	tkSecond.attach(1,Second_Tick);                 // Start internal timer
 
 }
+
+void startSensors(void)
+{
+	  sensors.begin();
+}
+
 #endif

@@ -2,8 +2,6 @@
 #define MQTTHANDLER_H
 
 
-// handle incoming messages
-
 void callback(char* topic_str, byte* payload_str, unsigned int length)
 {
 	String topic = String(topic_str);
@@ -14,13 +12,13 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
     if ((payload.equalsIgnoreCase("on:")))
     {
     BypassOn = true;
-    client.publish("feedback", "Device <ON>");
+    client.publish(mqttFeedbackTopic.c_str(), "Device <ON>");
     }
   
       else if ((payload.equalsIgnoreCase("off:")))
         {
         BypassOn = false;
-        client.publish("feedback", "Device <OFF>");
+        client.publish(mqttFeedbackTopic.c_str(), "Device <OFF>");
         }
 
 
@@ -30,7 +28,7 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
         sprintf(timeBuff, "%02d:%02d - Date is %02d/%02d/%02d", DateTime.hour,DateTime.minute,DateTime.day,DateTime.month,DateTime.year);
         String MQTTTime = "Time is: ";
         MQTTTime.concat(timeBuff);
-        client.publish("feedback", MQTTTime.c_str());
+        client.publish(mqttFeedbackTopic.c_str(), MQTTTime.c_str());
         Serial.println("feedback Device Current Time is " + MQTTTime);
         }
 
@@ -47,14 +45,14 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
             sprintf(minBuff, "%02d:%02d", config.TurnOnHour, config.TurnOnMinute);
             String pubOnTime ="On time set to: ";
             		pubOnTime.concat(minBuff);
-            client.publish("feedback",pubOnTime.c_str());
+            client.publish(mqttFeedbackTopic.c_str(),pubOnTime.c_str());
             WriteConfig();
             }
              else 
                {
                Serial.println("");
                Serial.println("Time must be entered in the following format:- on time: 12:00 or on time: 06:30 etc.");
-               client.publish("feedback", "Incorrectly formatted message...!");
+               client.publish(mqttFeedbackTopic.c_str(), "Incorrectly formatted message...!");
                }
          }
 
@@ -71,14 +69,14 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
             sprintf(minBuff, "%02d:%02d",config.TurnOffHour, config.TurnOffMinute);
             String pubOffTime = "Off time set to: ";
             pubOffTime.concat(minBuff);
-            client.publish("feedback",pubOffTime.c_str());
+            client.publish(mqttFeedbackTopic.c_str(),pubOffTime.c_str());
             WriteConfig();
             }
               else 
               {
                Serial.println("");
                Serial.println("Time must be entered in the following format:- off time: 12:00 or off time: 06:30 etc.");
-               client.publish("feedback", "Incorrectly formatted message...!");
+               client.publish(mqttFeedbackTopic.c_str(), "Incorrectly formatted message...!");
               }
          }
 
@@ -91,14 +89,14 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
               {
               config.AutoTurnOn = true;
               Serial.println("Device automatic turn on enabled: ");
-              client.publish("feedback", "Automatic turn on is enabled");
+              client.publish(mqttFeedbackTopic.c_str(), "Automatic turn on is enabled");
               WriteConfig();
               }
            else if (MQTTAutoOffOn == "disable")
               {
                config.AutoTurnOn = false; 
                Serial.println("Device automatic turn on disabled: ");
-               client.publish("feedback", "Automatic turn on is disabled");
+               client.publish(mqttFeedbackTopic.c_str(), "Automatic turn on is disabled");
                WriteConfig();
               }           
                 else
@@ -107,7 +105,7 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
                  Serial.println("Time must be entered in the following format:- auto turn on: enable or auto turn on: disable.");
                  String errorString="?? ";
                  errorString.concat(MQTTAutoOffOn);
-                 client.publish("feedback",  + errorString.c_str());
+                 client.publish(mqttFeedbackTopic.c_str(),  + errorString.c_str());
                  }
          }
 
@@ -119,14 +117,14 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
               {
               config.AutoTurnOff = true;
               Serial.println("Device automatic turn off enabled: ");
-              client.publish("feedback", "Automatic turn off is enabled");
+              client.publish(mqttFeedbackTopic.c_str(), "Automatic turn off is enabled");
               WriteConfig();
               }
            else if (MQTTAutoOffOn == "disable")
               {
                config.AutoTurnOff = false; 
                Serial.println("Device automatic turn off disabled: ");
-               client.publish("feedback", "Automatic turn off is disabled");
+               client.publish(mqttFeedbackTopic.c_str(), "Automatic turn off is disabled");
                WriteConfig();
               }           
                 else
@@ -135,7 +133,7 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
                  Serial.println("Time must be entered in the following format:- auto turn off: enable or auto turn off: disable.");
                  String errorString="?? ";
                  errorString.concat(MQTTAutoOffOn);
-                 client.publish("feedback", errorString.c_str());
+                 client.publish(mqttFeedbackTopic.c_str(), errorString.c_str());
                  }
          }
 
@@ -187,19 +185,19 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
         sprintf(offBuff, "%02d:%02d",config.TurnOffHour, config.TurnOffMinute);
         String pubOffBuff = "Turn off time is: ";
         pubOffBuff.concat(offBuff);
-        client.publish("feedback", "Current setup status: ");
+        client.publish(mqttFeedbackTopic.c_str(), "Current setup status: ");
         delay(100);
-        client.publish("feedback", statTurnOn.c_str());
+        client.publish(mqttFeedbackTopic.c_str(), statTurnOn.c_str());
         delay(100);
-        client.publish("feedback", statTurnOff.c_str());
+        client.publish(mqttFeedbackTopic.c_str(), statTurnOff.c_str());
         delay(100);
-        client.publish("feedback", pubOnBuff.c_str());
+        client.publish(mqttFeedbackTopic.c_str(), pubOnBuff.c_str());
         delay(100);
-        client.publish("feedback",  + pubOffBuff.c_str());
+        client.publish(mqttFeedbackTopic.c_str(),  + pubOffBuff.c_str());
         delay(100);
-        client.publish("feedback", bypassStat.c_str());
+        client.publish(mqttFeedbackTopic.c_str(), bypassStat.c_str());
         delay(100);
-        client.publish("feedback", timerStat.c_str());
+        client.publish(mqttFeedbackTopic.c_str(), timerStat.c_str());
       }
     else  
     {
@@ -210,10 +208,17 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
     }
 }
 
+void setupMQTTTopics(void)
+{
+	mqttFeedbackTopic = String("/ha/")+String(config.DeviceName)+String("/feedback");
+	mqttTemperatureTopic = String("/ha/")+String(config.DeviceName)+String("/temperature");
+}
+
 void setupMQTT(void)
 {
+	setupMQTTTopics();
 	client.setCallback(callback);                          // Complete PubSubClient initalisation after client instance creation in globals
-	client.setServer(config.MQTTBroker.c_str(), config.MQTTport);
+	client.setServer(config.MQTTBroker, config.MQTTport);
 }
 
 void ConnectMQTT()
@@ -223,7 +228,7 @@ void ConnectMQTT()
     Serial.println("");
     Serial.print("Connecting to MQTT Broker:"); //Serial.print(config.MQTTBroker);
     int retries = 4;
-      while (!client.connect(config.clientID.c_str(), config.MQTTuser.c_str(), config.MQTTpass.c_str()) && retries-- )
+      while (!client.connect(config.clientID, config.MQTTuser, config.MQTTpass) && retries-- )
       {
       delay(500);
       Serial.print(".");
@@ -236,7 +241,7 @@ void ConnectMQTT()
         Serial.print(config.clientID);
         Serial.print(": is connected to MQTT server: ");
         Serial.println(config.MQTTBroker);
-        client.publish("feedback", "hello from esp8266");
+        client.publish(mqttFeedbackTopic.c_str(), "hello from esp8266");
         Serial.println("");
         client.subscribe("device");
         Serial.println("Subscribed to: 'device'");
