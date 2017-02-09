@@ -39,6 +39,8 @@
 #include <EEPROM.h>
 #include <WiFiUdp.h>
 #include <PubSubClient.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 #include "conversions.h"
 #include "globals.h"
 #include "config.h"
@@ -57,7 +59,7 @@ void setup ( void )
 	startWebServer();
 	startNTPClient();
 	startTimers();
-
+	startSensors();
 	delay(500);
 }
 

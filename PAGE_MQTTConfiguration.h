@@ -58,17 +58,21 @@ void send_mqtt_configuration_html()
 	if (server.args() > 0 )  // Save Settings
 	{
 		String temp = "";
+		Serial.println("Decoding mqtt config");
 		for ( uint8_t i = 0; i < server.args(); i++ )
 		{
-			if (server.argName(i) == "clientid") config.clientID =   urldecode(server.arg(i));
-			if (server.argName(i) == "username") config.MQTTuser =    urldecode(server.arg(i));
-			if (server.argName(i) == "passwd") config.MQTTpass =    urldecode(server.arg(i));
+			if (server.argName(i) == "clientid") urldecode(server.arg(i)).toCharArray( config.clientID,  sizeof(config.clientID));
+			if (server.argName(i) == "username") urldecode(server.arg(i)).toCharArray(config.MQTTuser,   sizeof(config.MQTTuser));
+			if (server.argName(i) == "passwd")   urldecode(server.arg(i)).toCharArray(config.MQTTpass,   sizeof(config.MQTTpass));
+			if (server.argName(i) == "broker")   urldecode(server.arg(i)).toCharArray(config.MQTTBroker, sizeof(config.MQTTBroker));
 			if (server.argName(i) == "mqttport") config.MQTTport =  server.arg(i).toInt();
-			if (server.argName(i) == "broker") config.MQTTBroker =    urldecode(server.arg(i));
 		}
+		Serial.println("Sending mqtt config");
 		server.send ( 200, "text/html", reinterpret_cast<const __FlashStringHelper *>(PAGE_Reloading ));
+		Serial.println("Writing config");
 		WriteConfig();
-		client.setServer(config.MQTTBroker.c_str(), config.MQTTport);
+		Serial.println("Conecting mqtt");
+		client.setServer(config.MQTTBroker, config.MQTTport);
 		ConnectMQTT();
 		firstStart = true;
 		AdminTimeOutCounter=0;
