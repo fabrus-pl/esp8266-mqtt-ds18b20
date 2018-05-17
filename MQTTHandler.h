@@ -9,136 +9,7 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
 
     Serial.print("Received from Topic: "); Serial.print(topic); Serial.print("=> "); Serial.print(payload); Serial.print("  Length: "); Serial.println(length,DEC);
    
-    if ((payload.equalsIgnoreCase("on:")))
-    {
-    BypassOn = true;
-    client.publish(mqttFeedbackTopic.c_str(), "Device <ON>");
-    }
-  
-      else if ((payload.equalsIgnoreCase("off:")))
-        {
-        BypassOn = false;
-        client.publish(mqttFeedbackTopic.c_str(), "Device <OFF>");
-        }
-
-
-      else if ((payload.equalsIgnoreCase("time:")))
-        {
-        char timeBuff[25];
-        sprintf(timeBuff, "%02d:%02d - Date is %02d/%02d/%02d", DateTime.hour,DateTime.minute,DateTime.day,DateTime.month,DateTime.year);
-        String MQTTTime = "Time is: ";
-        MQTTTime.concat(timeBuff);
-        client.publish(mqttFeedbackTopic.c_str(), MQTTTime.c_str());
-        Serial.println("feedback Device Current Time is " + MQTTTime);
-        }
-
-      else if((payload.startsWith("on time:")))
-        {
-        String OnTime = payload;
-            if (OnTime.length()==14) 
-            {
-            OnTime.remove(0,9);
-            Serial.print("Device on time is: "); Serial.println(OnTime);
-            config.TurnOnHour = OnTime.substring(0,3).toInt();
-            config.TurnOnMinute = OnTime.substring(3,5).toInt();
-            char minBuff[5];                                                                // All this just to print leading zero's!
-            sprintf(minBuff, "%02d:%02d", config.TurnOnHour, config.TurnOnMinute);
-            String pubOnTime ="On time set to: ";
-            		pubOnTime.concat(minBuff);
-            client.publish(mqttFeedbackTopic.c_str(),pubOnTime.c_str());
-            WriteConfig();
-            }
-             else 
-               {
-               Serial.println("");
-               Serial.println("Time must be entered in the following format:- on time: 12:00 or on time: 06:30 etc.");
-               client.publish(mqttFeedbackTopic.c_str(), "Incorrectly formatted message...!");
-               }
-         }
-
-      else if((payload.startsWith("off time:")))
-        {
-        String OffTime = payload;
-          if (OffTime.length()==15) 
-            {
-            OffTime.remove(0,10);
-            Serial.print("Device off time is: "); Serial.println(OffTime);
-            config.TurnOffHour = OffTime.substring(0,3).toInt();
-            config.TurnOffMinute = OffTime.substring(3,5).toInt();
-            char minBuff[5];                                                                  // All this just to print leading zero's!
-            sprintf(minBuff, "%02d:%02d",config.TurnOffHour, config.TurnOffMinute);
-            String pubOffTime = "Off time set to: ";
-            pubOffTime.concat(minBuff);
-            client.publish(mqttFeedbackTopic.c_str(),pubOffTime.c_str());
-            WriteConfig();
-            }
-              else 
-              {
-               Serial.println("");
-               Serial.println("Time must be entered in the following format:- off time: 12:00 or off time: 06:30 etc.");
-               client.publish(mqttFeedbackTopic.c_str(), "Incorrectly formatted message...!");
-              }
-         }
-
-
-      else if((payload.startsWith("auto turn on:")))
-        {
-        String MQTTAutoOffOn = payload;
-        MQTTAutoOffOn.remove(0,14);
-           if (MQTTAutoOffOn == "enable")
-              {
-              config.AutoTurnOn = true;
-              Serial.println("Device automatic turn on enabled: ");
-              client.publish(mqttFeedbackTopic.c_str(), "Automatic turn on is enabled");
-              WriteConfig();
-              }
-           else if (MQTTAutoOffOn == "disable")
-              {
-               config.AutoTurnOn = false; 
-               Serial.println("Device automatic turn on disabled: ");
-               client.publish(mqttFeedbackTopic.c_str(), "Automatic turn on is disabled");
-               WriteConfig();
-              }           
-                else
-                 {
-                 Serial.println("");
-                 Serial.println("Time must be entered in the following format:- auto turn on: enable or auto turn on: disable.");
-                 String errorString="?? ";
-                 errorString.concat(MQTTAutoOffOn);
-                 client.publish(mqttFeedbackTopic.c_str(),  + errorString.c_str());
-                 }
-         }
-
-      else if((payload.startsWith("auto turn off:")))
-        {
-        String MQTTAutoOffOn = payload;
-        MQTTAutoOffOn.remove(0,15);
-           if (MQTTAutoOffOn == "enable")
-              {
-              config.AutoTurnOff = true;
-              Serial.println("Device automatic turn off enabled: ");
-              client.publish(mqttFeedbackTopic.c_str(), "Automatic turn off is enabled");
-              WriteConfig();
-              }
-           else if (MQTTAutoOffOn == "disable")
-              {
-               config.AutoTurnOff = false; 
-               Serial.println("Device automatic turn off disabled: ");
-               client.publish(mqttFeedbackTopic.c_str(), "Automatic turn off is disabled");
-               WriteConfig();
-              }           
-                else
-                  {
-                 Serial.println("");
-                 Serial.println("Time must be entered in the following format:- auto turn off: enable or auto turn off: disable.");
-                 String errorString="?? ";
-                 errorString.concat(MQTTAutoOffOn);
-                 client.publish(mqttFeedbackTopic.c_str(), errorString.c_str());
-                 }
-         }
-
-
-     else if ((payload.equalsIgnoreCase("status:")))
+     if ((payload.equalsIgnoreCase("status:")))
        {
         String statTurnOn;
         String statTurnOff;
@@ -201,10 +72,10 @@ void callback(char* topic_str, byte* payload_str, unsigned int length)
       }
     else  
     {
-    String errorString = "?? ";
-    errorString.concat(payload);
-    client.publish("feedback", errorString.c_str());
-    Serial.print(" \tsent: feedback=> ???? '"); Serial.print(payload); Serial.println("'");
+		String errorString = "?? ";
+		errorString.concat(payload);
+		client.publish("feedback", errorString.c_str());
+		Serial.print(" \tsent: feedback=> ???? '"); Serial.print(payload); Serial.println("'");
     }
 }
 

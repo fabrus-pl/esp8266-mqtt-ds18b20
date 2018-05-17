@@ -123,63 +123,6 @@ void handleAdminMode(void)
 
 }
 
-void handleTurnOnAndOff(void)
-{
-	if (DateTime.hour != 0 && DateTime.minute != 0 && (cb))      //Dont turn on anything if set time = 00:00 and we dont have NTP time at power up
-	{
-		if(DateTime.minute != Minute_Old)
-		{
-			Minute_Old = DateTime.minute;                                                               // Turn on device if AutoTurn on enabled and time set = NTP time
-			if (config.AutoTurnOn)
-			{
-				if (DateTime.hour == config.TurnOnHour && DateTime.minute == config.TurnOnMinute)
-				{
-					devStat = true;                                                                         // Set status to indicate that we are under timer mode
-					digitalWrite(LED,LOW);
-					Serial.println("Device On");
-					client.publish(mqttFeedbackTopic.c_str(), "Device <ON>");
-				}
-			}
-
-			Minute_Old = DateTime.minute;                                                                // Turn off device if AutoTurn off enabled and time set = NTP time
-			if (config.AutoTurnOff)
-			{
-				if (DateTime.hour == config.TurnOffHour && DateTime.minute == config.TurnOffMinute)
-				{
-					devStat = false;                                                                        // Set status to indicate that we have finished timer mode
-					digitalWrite(LED,HIGH);
-					Serial.println("Device Off");
-					client.publish(mqttFeedbackTopic.c_str(), "Device <OFF>");
-				}
-			}
-		}
-	}
-
-	if (BypassOn)                                                        // Turn on device if Bypass enabled
-	{
-		digitalWrite(LED,LOW);
-	}
-	else if ((!BypassOn) && (devStat))                                // Turn on device if Bypass disabled as timer activated
-	{
-		digitalWrite(LED,LOW);
-	}
-	else if ((!BypassOn) && (!devStat))                               // Turn off device if Bypass disabled and timer deactivated
-	{
-		digitalWrite(LED,HIGH);
-	}
-
-	if ((config.AutoTurnOff==false) && (!BypassOn))                      // Turn off if AutoTurnOff is disabled and Bypass disabled
-	{                                                                 // forces device to turn off in timer mode, cannot be activated again by eanbling AutoTurnoff, use bypass if you wish to turn device on
-		devStat = false;
-	}
-
-	if ((DateTime.hour == config.TurnOffHour && DateTime.minute == config.TurnOffMinute) && (BypassOn)) // turn off device as off time reached (just in case we left Bypass on by mistake!)
-	{
-		digitalWrite(LED, HIGH);
-		BypassOn = false;
-	}
-
-}
 void sensorsMeasure(void)
 {
 	float temp =0;

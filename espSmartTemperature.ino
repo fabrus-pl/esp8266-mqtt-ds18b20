@@ -69,7 +69,6 @@ void loop ()
 	handleAdminMode();
 	handleWebServer();
 	handleNTPUpdate();
-	handleTurnOnAndOff();
 	handleMQTTConnection();
 }
 
